@@ -1,35 +1,28 @@
 // ==UserScript==
 // @name         LinkedIn Feed Blocker
 // @namespace    http://tampermonkey.net/
-// @version      1.1
+// @version      1.3
 // @description  Redirect LinkedIn feed to profile
 // @author       You
 // @match        https://www.linkedin.com/feed*
-// @match        https://www.linkedin.com/feed/
 // @run-at       document-start
 // @grant        none
 // ==/UserScript==
 
 (function() {
     'use strict';
-    
-    // Immediate redirect before page loads
-    if (window.location.href.includes('/feed')) {
+
+    const now = Date.now();
+    const lastRedirect = sessionStorage.getItem('lastLinkedInRedirect');
+
+    // Only block if we redirected less than 1 second ago (prevents loops)
+    if (lastRedirect && (now - parseInt(lastRedirect)) < 1000) {
+        return;
+    }
+
+    // Redirect and store timestamp
+    if (window.location.pathname.startsWith('/feed')) {
+        sessionStorage.setItem('lastLinkedInRedirect', now.toString());
         window.location.replace('https://www.linkedin.com/in/me/');
     }
-    
-    // Backup check every 100ms
-    const interval = setInterval(function() {
-        if (window.location.href.includes('/feed')) {
-            window.location.replace('https://www.linkedin.com/in/me/');
-        }
-    }, 100);
-    
-    // Block scrolling if somehow still on feed
-    document.addEventListener('DOMContentLoaded', function() {
-        if (window.location.href.includes('/feed')) {
-            document.body.style.overflow = 'hidden';
-            window.location.replace('https://www.linkedin.com/in/me/');
-        }
-    });
 })();
